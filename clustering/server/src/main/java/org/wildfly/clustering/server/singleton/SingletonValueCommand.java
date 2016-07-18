@@ -23,6 +23,10 @@ package org.wildfly.clustering.server.singleton;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Command that returns the value of the singleton service.
+ * @author Paul Ferraro
+ */
 public class SingletonValueCommand<T> implements SingletonCommand<AtomicReference<T>, T> {
     private static final long serialVersionUID = -2849349352107418635L;
 

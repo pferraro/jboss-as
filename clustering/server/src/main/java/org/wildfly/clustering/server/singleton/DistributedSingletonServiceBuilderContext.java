@@ -27,7 +27,7 @@ import org.wildfly.clustering.provider.ServiceProviderRegistry;
 import org.wildfly.clustering.service.ValueDependency;
 
 /**
- * Context for building singleton services.
+ * Context for building distributed singleton services.
  * @author Paul Ferraro
  */
 public interface DistributedSingletonServiceBuilderContext {

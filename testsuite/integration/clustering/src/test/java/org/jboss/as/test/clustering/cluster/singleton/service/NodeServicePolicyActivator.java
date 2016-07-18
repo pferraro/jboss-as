@@ -22,31 +22,30 @@
 
 package org.jboss.as.test.clustering.cluster.singleton.service;
 
-import org.jboss.as.server.ServerEnvironment;
-import org.jboss.as.server.ServerEnvironmentService;
 import org.jboss.msc.service.ServiceActivator;
 import org.jboss.msc.service.ServiceActivatorContext;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceRegistryException;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.clustering.group.Group;
 import org.wildfly.clustering.singleton.SingletonDefaultRequirement;
 import org.wildfly.clustering.singleton.SingletonPolicy;
 
 /**
  * @author Paul Ferraro
  */
-public class MyServicePolicyActivator implements ServiceActivator {
+public class NodeServicePolicyActivator implements ServiceActivator {
 
-    public static final ServiceName SERVICE_NAME = ServiceName.JBOSS.append("test", "myservice", "default-policy");
+    public static final ServiceName SERVICE_NAME = ServiceName.JBOSS.append("test", "service", "default-policy");
 
     @Override
     public void activate(ServiceActivatorContext context) throws ServiceRegistryException {
         try {
             SingletonPolicy policy = (SingletonPolicy) context.getServiceRegistry().getRequiredService(ServiceName.parse(SingletonDefaultRequirement.SINGLETON_POLICY.getName())).awaitValue();
-            InjectedValue<ServerEnvironment> env = new InjectedValue<>();
-            MyService service = new MyService(env);
+            InjectedValue<Group> group = new InjectedValue<>();
+            NodeService service = new NodeService(group);
             policy.createSingletonServiceBuilder(SERVICE_NAME, service).build(context.getServiceTarget())
-                    .addDependency(ServerEnvironmentService.SERVICE_NAME, ServerEnvironment.class, env)
+                    .addDependency(ServiceName.parse("org.wildfly.clustering.group.local"), Group.class, group)
                     .install();
         } catch (InterruptedException e) {
             throw new ServiceRegistryException(e);

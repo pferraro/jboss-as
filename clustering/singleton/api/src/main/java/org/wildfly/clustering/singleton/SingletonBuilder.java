@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2013, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,35 +19,20 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.wildfly.clustering.server.singleton;
 
-import java.util.concurrent.atomic.AtomicReference;
+package org.wildfly.clustering.singleton;
+
+import org.jboss.msc.service.Service;
+import org.wildfly.clustering.service.Builder;
 
 /**
- * Command dispatcher context for singleton services.
  * @author Paul Ferraro
  */
-public interface SingletonContext<T> {
-
+public interface SingletonBuilder<T> extends Builder<T> {
     /**
-     * Starts the primary service on this node.
+     * Defines an optional service to run while this node is not the primary singleton provider.
+     * @param service a service
+     * @return this builder
      */
-    void start();
-
-    /**
-     * Stops the primary service on this node.
-     */
-    void stop();
-
-    /**
-     * Returns the value of this service.
-     * @return a reference to the service value.
-     */
-    AtomicReference<T> getValueRef();
-
-    /**
-     * Indicates whether or not this node is the primary provider of the associated singleton service.
-     * @return true, if this node is primary, or false otherwise.
-     */
-    boolean isPrimary();
+    SingletonBuilder<T> backupService(Service<T> service);
 }

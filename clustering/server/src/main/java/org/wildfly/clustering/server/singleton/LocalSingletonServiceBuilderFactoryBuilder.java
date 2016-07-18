@@ -25,23 +25,35 @@ package org.wildfly.clustering.server.singleton;
 import java.io.Serializable;
 
 import org.jboss.as.clustering.controller.CapabilityServiceBuilder;
+import org.jboss.as.controller.capability.CapabilityServiceSupport;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.Value;
+import org.wildfly.clustering.group.Group;
+import org.wildfly.clustering.service.Builder;
+import org.wildfly.clustering.service.InjectedValueDependency;
+import org.wildfly.clustering.service.ValueDependency;
 import org.wildfly.clustering.singleton.SingletonServiceBuilderFactory;
+import org.wildfly.clustering.spi.ClusteringCacheRequirement;
 
 /**
  * Builds a non-clustered {@link SingletonServiceBuilderFactory}.
  * @author Paul Ferraro
  */
-public class LocalSingletonServiceBuilderFactoryBuilder<T extends Serializable> implements CapabilityServiceBuilder<SingletonServiceBuilderFactory> {
+public class LocalSingletonServiceBuilderFactoryBuilder<T extends Serializable> implements CapabilityServiceBuilder<SingletonServiceBuilderFactory>, LocalSingletonServiceBuilderContext {
 
     private final ServiceName name;
+    private final String containerName;
+    private final String cacheName;
 
-    public LocalSingletonServiceBuilderFactoryBuilder(ServiceName name) {
+    private volatile ValueDependency<Group> group;
+
+    public LocalSingletonServiceBuilderFactoryBuilder(ServiceName name, String containerName, String cacheName) {
         this.name = name;
+        this.containerName = containerName;
+        this.cacheName = cacheName;
     }
 
     @Override
@@ -50,8 +62,19 @@ public class LocalSingletonServiceBuilderFactoryBuilder<T extends Serializable> 
     }
 
     @Override
+    public Builder<SingletonServiceBuilderFactory> configure(CapabilityServiceSupport support) {
+        this.group = new InjectedValueDependency<>(ClusteringCacheRequirement.GROUP.getServiceName(support, this.containerName, this.cacheName), Group.class);
+        return this;
+    }
+
+    @Override
     public ServiceBuilder<SingletonServiceBuilderFactory> build(ServiceTarget target) {
-        Value<SingletonServiceBuilderFactory> value = () -> new LocalSingletonServiceBuilderFactory();
+        Value<SingletonServiceBuilderFactory> value = () -> new LocalSingletonServiceBuilderFactory(this);
         return target.addService(this.name, new ValueService<>(value));
+    }
+
+    @Override
+    public ValueDependency<Group> getGroupDependency() {
+        return this.group;
     }
 }

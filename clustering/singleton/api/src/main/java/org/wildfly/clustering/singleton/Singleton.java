@@ -21,9 +21,39 @@
  */
 package org.wildfly.clustering.singleton;
 
+import java.util.Optional;
+import java.util.Set;
+
+import org.wildfly.clustering.group.Node;
+
 /**
+ * Interface implemented by singleton services.
  * @author Paul Ferraro
  */
 public interface Singleton {
-    boolean isMaster();
+    /**
+     * @deprecated Use {@link #isPrimary()} instead.
+     */
+    @Deprecated
+    default boolean isMaster() {
+        return this.isPrimary();
+    }
+
+    /**
+     * Indicates whether this node is the primary provider of the singleton.
+     * @return true, if this node is the primary node, false if it is a backup node.
+     */
+    boolean isPrimary();
+
+    /**
+     * Returns the set of nodes able to provide the associated service.
+     * @return a set of nodes
+     */
+    Set<Node> getProviders();
+
+    /**
+     * Returns the current primary singleton provider, if one exists.
+     * @return an optional node.
+     */
+    Optional<Node> getPrimaryProvider();
 }

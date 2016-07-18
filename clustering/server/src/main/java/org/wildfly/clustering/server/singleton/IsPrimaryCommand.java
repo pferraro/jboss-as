@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2013, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,35 +19,20 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.wildfly.clustering.server.singleton;
 
-import java.util.concurrent.atomic.AtomicReference;
+import org.wildfly.clustering.dispatcher.Command;
 
 /**
- * Command dispatcher context for singleton services.
+ * Command that indicates whether or not the current node is the primary provider of the associated singleton.
  * @author Paul Ferraro
  */
-public interface SingletonContext<T> {
+public class IsPrimaryCommand<T> implements Command<Boolean, SingletonContext<T>> {
+    private static final long serialVersionUID = 9053762412476718113L;
 
-    /**
-     * Starts the primary service on this node.
-     */
-    void start();
-
-    /**
-     * Stops the primary service on this node.
-     */
-    void stop();
-
-    /**
-     * Returns the value of this service.
-     * @return a reference to the service value.
-     */
-    AtomicReference<T> getValueRef();
-
-    /**
-     * Indicates whether or not this node is the primary provider of the associated singleton service.
-     * @return true, if this node is primary, or false otherwise.
-     */
-    boolean isPrimary();
+    @Override
+    public Boolean execute(SingletonContext<T> context) throws Exception {
+        return context.isPrimary();
+    }
 }

@@ -22,22 +22,35 @@
 
 package org.wildfly.clustering.server.singleton;
 
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
+import org.jboss.msc.service.StartContext;
+import org.jboss.msc.service.StartException;
+import org.jboss.msc.service.StopContext;
+import org.wildfly.clustering.group.Group;
+import org.wildfly.clustering.group.Node;
+import org.wildfly.clustering.service.ValueDependency;
+import org.wildfly.clustering.singleton.Singleton;
 import org.wildfly.clustering.singleton.SingletonElectionPolicy;
 import org.wildfly.clustering.singleton.SingletonServiceBuilder;
 
 /**
  * @author Paul Ferraro
  */
-public class LocalSingletonServiceBuilder<T> implements SingletonServiceBuilder<T> {
+public class LocalSingletonServiceBuilder<T> implements SingletonServiceBuilder<T>, Singleton, Service<T> {
 
+    private final ValueDependency<Group> group;
     private final ServiceName name;
     private final Service<T> service;
 
-    public LocalSingletonServiceBuilder(ServiceName name, Service<T> service) {
+    public LocalSingletonServiceBuilder(LocalSingletonServiceBuilderContext context, ServiceName name, Service<T> service) {
+        this.group = context.getGroupDependency();
         this.name = name;
         this.service = service;
     }
@@ -55,12 +68,48 @@ public class LocalSingletonServiceBuilder<T> implements SingletonServiceBuilder<
     }
 
     @Override
+    public SingletonServiceBuilder<T> backupService(Service<T> backupService) {
+        // A backup service will never run on a local singleton
+        return this;
+    }
+
+    @Override
     public ServiceBuilder<T> build(ServiceTarget target) {
-        return target.addService(this.name, this.service);
+        return this.group.register(target.addService(this.name, this));
     }
 
     @Override
     public ServiceName getServiceName() {
         return this.name;
+    }
+
+    @Override
+    public T getValue() {
+        return this.service.getValue();
+    }
+
+    @Override
+    public void start(StartContext context) throws StartException {
+        this.service.start(context);
+    }
+
+    @Override
+    public void stop(StopContext context) {
+        this.service.stop(context);
+    }
+
+    @Override
+    public boolean isPrimary() {
+        return true;
+    }
+
+    @Override
+    public Set<Node> getProviders() {
+        return Collections.singleton(this.group.getValue().getLocalNode());
+    }
+
+    @Override
+    public Optional<Node> getPrimaryProvider() {
+        return Optional.of(this.group.getValue().getLocalNode());
     }
 }

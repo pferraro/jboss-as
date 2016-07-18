@@ -30,6 +30,6 @@ import org.wildfly.clustering.spi.LocalCacheBuilderProvider;
 public class LocalSingletonServiceBuilderFactoryBuilderProvider extends SingletonServiceBuilderFactoryBuilderProvider implements LocalCacheBuilderProvider {
 
     public LocalSingletonServiceBuilderFactoryBuilderProvider() {
-        super((name, containerName, cacheName) -> new LocalSingletonServiceBuilderFactoryBuilder<>(name));
+        super((name, containerName, cacheName) -> new LocalSingletonServiceBuilderFactoryBuilder<>(name, containerName, cacheName));
     }
 }
