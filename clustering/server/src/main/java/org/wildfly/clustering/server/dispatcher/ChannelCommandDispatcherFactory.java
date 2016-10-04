@@ -156,7 +156,7 @@ public class ChannelCommandDispatcherFactory implements CommandDispatcherFactory
         final int version = this.marshallingContext.getCurrentVersion();
         CommandMarshaller<C> marshaller = new CommandMarshaller<C>() {
             @Override
-            public <R> byte[] marshal(Command<R, C> command) throws IOException {
+            public <R> byte[] marshal(Command<R, ? super C> command) throws IOException {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 try (DataOutputStream output = new DataOutputStream(bytes)) {
                     IndexExternalizer.VARIABLE.writeData(output, version);
