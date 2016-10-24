@@ -42,6 +42,7 @@ import org.jgroups.blocks.RspFilter;
 import org.jgroups.util.Rsp;
 import org.wildfly.clustering.dispatcher.Command;
 import org.wildfly.clustering.dispatcher.CommandDispatcher;
+import org.wildfly.clustering.dispatcher.CommandDispatcherException;
 import org.wildfly.clustering.dispatcher.CommandResponse;
 import org.wildfly.clustering.group.Node;
 import org.wildfly.clustering.group.NodeFactory;
@@ -82,87 +83,108 @@ public abstract class ChannelCommandDispatcher<C> implements CommandDispatcher<C
     }
 
     @Override
-    public <R> Map<Node, CommandResponse<R>> executeOnCluster(Command<R, C> command, Node... excludedNodes) throws Exception {
+    public <R> Map<Node, CommandResponse<R>> executeOnCluster(Command<R, C> command, Node... excludedNodes) throws CommandDispatcherException {
+        Message message = this.createMessage(command);
         RequestOptions options = this.createRequestOptions(excludedNodes);
-        Map<Address, Rsp<R>> responses = this.dispatcher.castMessage(null, this.createMessage(command), options);
+        try {
+            Map<Address, Rsp<R>> responses = this.dispatcher.castMessage(null, message, options);
 
-        Map<Node, CommandResponse<R>> results = new HashMap<>();
-        for (Map.Entry<Address, Rsp<R>> entry: responses.entrySet()) {
-            Address address = entry.getKey();
-            Rsp<R> response = entry.getValue();
-            if (response.wasReceived() && !response.wasSuspected()) {
-                results.put(this.factory.createNode(address), createCommandResponse(response));
+            Map<Node, CommandResponse<R>> results = new HashMap<>();
+            for (Map.Entry<Address, Rsp<R>> entry: responses.entrySet()) {
+                Address address = entry.getKey();
+                Rsp<R> response = entry.getValue();
+                if (response.wasReceived() && !response.wasSuspected()) {
+                    results.put(this.factory.createNode(address), createCommandResponse(response));
+                }
             }
-        }
 
-        return results;
+            return results;
+        } catch (Exception e) {
+            throw new CommandDispatcherException(e);
+        }
     }
 
     @Override
-    public <R> Map<Node, Future<R>> submitOnCluster(Command<R, C> command, Node... excludedNodes) throws Exception {
-        final Future<? extends Map<Address, Rsp<R>>> responses = this.dispatcher.castMessageWithFuture(null, this.createMessage(command), this.createRequestOptions(excludedNodes));
+    public <R> Map<Node, Future<R>> submitOnCluster(Command<R, C> command, Node... excludedNodes) throws CommandDispatcherException {
+        Message message = this.createMessage(command);
+        RequestOptions options = this.createRequestOptions(excludedNodes);
+        try {
+            Future<? extends Map<Address, Rsp<R>>> responses = this.dispatcher.castMessageWithFuture(null, message, options);
 
-        Map<Node, Future<R>> results = new HashMap<>();
-        Set<Node> excluded = (excludedNodes != null) ? new HashSet<>(Arrays.asList(excludedNodes)) : Collections.<Node>emptySet();
-        for (Address address: this.dispatcher.getChannel().getView().getMembers()) {
-            final Node node = this.factory.createNode(address);
-            if (!excluded.contains(node)) {
-                Future<R> future = new Future<R>() {
-                    @Override
-                    public boolean cancel(boolean mayInterruptIfRunning) {
-                        return responses.cancel(mayInterruptIfRunning);
-                    }
+            Map<Node, Future<R>> results = new HashMap<>();
+            Set<Node> excluded = (excludedNodes != null) ? new HashSet<>(Arrays.asList(excludedNodes)) : Collections.emptySet();
+            for (Address address: this.dispatcher.getChannel().getView().getMembers()) {
+                Node node = this.factory.createNode(address);
+                if (!excluded.contains(node)) {
+                    Future<R> future = new Future<R>() {
+                        @Override
+                        public boolean cancel(boolean mayInterruptIfRunning) {
+                            return responses.cancel(mayInterruptIfRunning);
+                        }
 
-                    @Override
-                    public R get() throws InterruptedException, ExecutionException {
-                        return createCommandResponse(responses.get().get(node)).get();
-                    }
+                        @Override
+                        public R get() throws InterruptedException, ExecutionException {
+                            return createCommandResponse(responses.get().get(node)).get();
+                        }
 
-                    @Override
-                    public R get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-                        return createCommandResponse(responses.get(timeout, unit).get(node)).get();
-                    }
+                        @Override
+                        public R get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                            return createCommandResponse(responses.get(timeout, unit).get(node)).get();
+                        }
 
-                    @Override
-                    public boolean isCancelled() {
-                        return responses.isCancelled();
-                    }
+                        @Override
+                        public boolean isCancelled() {
+                            return responses.isCancelled();
+                        }
 
-                    @Override
-                    public boolean isDone() {
-                        return responses.isDone();
-                    }
-                };
-                results.put(node, future);
+                        @Override
+                        public boolean isDone() {
+                            return responses.isDone();
+                        }
+                    };
+                    results.put(node, future);
+                }
             }
+            return results;
+        } catch (Exception e) {
+            throw new CommandDispatcherException(e);
         }
-        return results;
     }
 
     @Override
-    public <R> CommandResponse<R> executeOnNode(Command<R, C> command, Node node) throws Exception {
+    public <R> CommandResponse<R> executeOnNode(Command<R, C> command, Node node) throws CommandDispatcherException {
         // Bypass MessageDispatcher if target node is local
         if (this.isLocal(node)) {
             return this.localDispatcher.executeOnNode(command, node);
         }
-        // Use sendMessageWithFuture(...) instead of sendMessage(...) since we want to differentiate between sender exceptions and receiver exceptions
-        Future<R> future = this.dispatcher.sendMessageWithFuture(this.createMessage(command, node), this.createRequestOptions());
+        Message message = this.createMessage(command, node);
+        RequestOptions options = this.createRequestOptions();
         try {
+            // Use sendMessageWithFuture(...) instead of sendMessage(...) since we want to differentiate between sender exceptions and receiver exceptions
+            Future<R> future = this.dispatcher.sendMessageWithFuture(message, options);
             return new SimpleCommandResponse<>(future.get());
         } catch (InterruptedException e) {
             return new SimpleCommandResponse<>(e);
         } catch (ExecutionException e) {
             return new SimpleCommandResponse<>(e);
+        } catch (Exception e) {
+            throw new CommandDispatcherException(e);
         }
     }
 
     @Override
-    public <R> Future<R> submitOnNode(Command<R, C> command, Node node) throws Exception {
+    public <R> Future<R> submitOnNode(Command<R, C> command, Node node) throws CommandDispatcherException {
         // Bypass MessageDispatcher if target node is local
         if (this.isLocal(node)) {
             return this.localDispatcher.submitOnNode(command, node);
         }
-        return this.dispatcher.sendMessageWithFuture(this.createMessage(command, node), this.createRequestOptions());
+        Message message = this.createMessage(command, node);
+        RequestOptions options = this.createRequestOptions();
+        try {
+            return this.dispatcher.sendMessageWithFuture(message, options);
+        } catch (Exception e) {
+            throw new CommandDispatcherException(e);
+        }
     }
 
     private <R> Message createMessage(Command<R, C> command) {

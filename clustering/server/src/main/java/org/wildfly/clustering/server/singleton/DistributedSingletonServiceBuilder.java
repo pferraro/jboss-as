@@ -40,6 +40,7 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 import org.wildfly.clustering.dispatcher.CommandDispatcher;
+import org.wildfly.clustering.dispatcher.CommandDispatcherException;
 import org.wildfly.clustering.dispatcher.CommandDispatcherFactory;
 import org.wildfly.clustering.group.Group;
 import org.wildfly.clustering.group.Node;
@@ -176,7 +177,7 @@ public class DistributedSingletonServiceBuilder<T> implements SingletonServiceBu
                     // Stop service on every node
                     dispatcher.executeOnCluster(new StopCommand<>());
                 }
-            } catch (Exception e) {
+            } catch (CommandDispatcherException e) {
                 throw new IllegalStateException(e);
             }
         }
