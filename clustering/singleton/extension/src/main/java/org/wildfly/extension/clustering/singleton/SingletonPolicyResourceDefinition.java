@@ -88,15 +88,15 @@ public class SingletonPolicyResourceDefinition extends ChildResourceDefinition {
         ;
         private final AttributeDefinition definition;
 
-        private Attribute(String name, ModelType type, DefaultableCapabilityReference reference) {
+        Attribute(String name, ModelType type, DefaultableCapabilityReference reference) {
             this.definition = createBuilder(name, type).setAllowNull(true).setCapabilityReference(reference).build();
         }
 
-        private Attribute(String name, ModelType type, CapabilityReference reference) {
+        Attribute(String name, ModelType type, CapabilityReference reference) {
             this.definition = createBuilder(name, type).setAllowNull(false).setCapabilityReference(reference).build();
         }
 
-        private Attribute(String name, ModelType type, ModelNode defaultValue) {
+        Attribute(String name, ModelType type, ModelNode defaultValue) {
             this.definition = createBuilder(name, type)
                     .setAllowExpression(true)
                     .setAllowNull(true)
