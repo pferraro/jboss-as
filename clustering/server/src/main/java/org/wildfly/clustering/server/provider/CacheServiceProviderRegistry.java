@@ -39,6 +39,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.wildfly.clustering.dispatcher.CommandDispatcher;
+import org.wildfly.clustering.dispatcher.CommandDispatcherException;
 import org.wildfly.clustering.ee.Batch;
 import org.wildfly.clustering.ee.Batcher;
 import org.wildfly.clustering.group.Group;
@@ -57,22 +58,27 @@ import org.wildfly.clustering.server.logging.ClusteringServerLogger;
  * @author Paul Ferraro
  */
 @org.infinispan.notifications.Listener(sync = false)
-public class CacheServiceProviderRegistry<T> implements ServiceProviderRegistry<T>, Group.Listener, AutoCloseable {
+public class CacheServiceProviderRegistry<T> implements ServiceProviderRegistry<T>, ServiceProvider<T>, Group.Listener, AutoCloseable {
 
     private final ConcurrentMap<T, Listener> listeners = new ConcurrentHashMap<>();
     private final Batcher<? extends Batch> batcher;
     private final Cache<T, Set<Node>> cache;
     private final Group group;
-    private final CommandDispatcher<Set<T>> dispatcher;
+    private final CommandDispatcher<ServiceProvider<T>> dispatcher;
     private final ServiceExecutor executor = new StampedLockServiceExecutor();
 
     public CacheServiceProviderRegistry(CacheServiceProviderRegistryConfiguration<T> config) {
         this.group = config.getGroup();
         this.cache = config.getCache();
         this.batcher = config.getBatcher();
-        this.dispatcher = config.getCommandDispatcherFactory().createCommandDispatcher(config.getId(), this.listeners.keySet());
+        this.dispatcher = config.getCommandDispatcherFactory().createCommandDispatcher(config.getId(), this);
         this.cache.addListener(this);
         this.group.addListener(this);
+    }
+
+    @Override
+    public Set<T> getLocalServices() {
+        return this.listeners.keySet();
     }
 
     @Override
@@ -87,11 +93,6 @@ public class CacheServiceProviderRegistry<T> implements ServiceProviderRegistry<
     @Override
     public Group getGroup() {
         return this.group;
-    }
-
-    @Override
-    public ServiceProviderRegistration<T> register(T service) {
-        return this.register(service, null);
     }
 
     @Override
@@ -160,17 +161,10 @@ public class CacheServiceProviderRegistry<T> implements ServiceProviderRegistry<
                     }
                 }
                 if (merged) {
-                    // Re-assert services for new members following merge since these may have been lost following split
                     try (Batch batch = this.batcher.createBatch()) {
                         for (Node node: newNodes) {
-                            try {
-                                Collection<T> services = this.dispatcher.executeOnNode(new GetLocalServicesCommand<>(), node).get();
-                                services.forEach(service -> this.register(node, service));
-                            } catch (ExecutionException e) {
-                                ClusteringServerLogger.ROOT_LOGGER.warn(e.getCause().getLocalizedMessage(), e.getCause());
-                            } catch (Exception e) {
-                                ClusteringServerLogger.ROOT_LOGGER.warn(e.getLocalizedMessage(), e);
-                            }
+                            // Re-assert services for new members following merge since these may have been lost following split
+                            this.getServices(node).forEach(service -> this.register(node, service));
                         }
                     }
                 }
@@ -182,15 +176,24 @@ public class CacheServiceProviderRegistry<T> implements ServiceProviderRegistry<
     @CacheEntryModified
     public void modified(CacheEntryEvent<T, Set<Node>> event) {
         if (event.isPre()) return;
-        this.executor.execute(() -> {
-            Listener listener = this.listeners.get(event.getKey());
-            if (listener != null) {
+        Listener listener = this.listeners.get(event.getKey());
+        if (listener != null) {
+            this.executor.execute(() -> {
                 try {
                     listener.providersChanged(event.getValue());
                 } catch (Throwable e) {
                     ClusteringServerLogger.ROOT_LOGGER.serviceProviderRegistrationListenerFailed(e, this.cache.getCacheManager().getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName(), this.cache.getName(), event.getValue());
                 }
-            }
-        });
+            });
+        }
+    }
+
+    Collection<T> getServices(Node node) {
+        try {
+            return this.dispatcher.executeOnNode(new ServiceQueryCommand<>(), node).get();
+        } catch (CommandDispatcherException | ExecutionException e) {
+            ClusteringServerLogger.ROOT_LOGGER.warn(e.getLocalizedMessage(), e);
+            return Collections.emptySet();
+        }
     }
 }
