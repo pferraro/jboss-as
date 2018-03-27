@@ -17,25 +17,11 @@
 
 package org.jboss.as.jpa.hibernate5;
 
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.COLLECTION_CACHE_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.DEF_ENTITY_RESOURCE;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.DEF_QUERY_RESOURCE;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.ENTITY_CACHE_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.IMMUTABLE_ENTITY_CACHE_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.INFINISPAN_CONFIG_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.NATURAL_ID_CACHE_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.PENDING_PUTS_CACHE_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.QUERY_CACHE_RESOURCE_PROP;
-import static org.infinispan.hibernate.cache.commons.InfinispanRegionFactory.TIMESTAMPS_CACHE_RESOURCE_PROP;
-import static org.jboss.as.jpa.hibernate5.infinispan.InfinispanRegionFactory.CACHE_CONTAINER;
-import static org.jboss.as.jpa.hibernate5.infinispan.InfinispanRegionFactory.DEFAULT_CACHE_CONTAINER;
-
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
 import org.hibernate.cfg.AvailableSettings;
-import org.jboss.as.jpa.hibernate5.infinispan.SharedInfinispanRegionFactory;
 import org.jipijapa.cache.spi.Classification;
 import org.jipijapa.event.impl.internal.Notification;
 
@@ -46,9 +32,10 @@ import org.jipijapa.event.impl.internal.Notification;
  */
 public class HibernateSecondLevelCache {
 
-    private static final String DEFAULT_REGION_FACTORY = SharedInfinispanRegionFactory.class.getName();
+    private static final String DEFAULT_REGION_FACTORY = "org.infinispan.hibernate.cache.commons.InfinispanRegionFactory";
 
     public static final String CACHE_TYPE = "cachetype";    // shared (jpa) or private (for native applications)
+    public static final String CACHE_PRIVATE = "private";
     public static final String CONTAINER = "container";
     public static final String NAME = "name";
     public static final String CACHES = "caches";
@@ -67,12 +54,12 @@ public class HibernateSecondLevelCache {
             regionFactory = DEFAULT_REGION_FACTORY;
             mutableProperties.setProperty(AvailableSettings.CACHE_REGION_FACTORY, regionFactory);
         }
-        if (regionFactory.equals(DEFAULT_REGION_FACTORY)) {
+        if (Boolean.parseBoolean(mutableProperties.getProperty(ManagedEmbeddedCacheManagerProvider.SHARED, ManagedEmbeddedCacheManagerProvider.DEFAULT_SHARED))) {
             // Set infinispan defaults
-            String container = mutableProperties.getProperty(CACHE_CONTAINER);
+            String container = mutableProperties.getProperty(ManagedEmbeddedCacheManagerProvider.CACHE_CONTAINER);
             if (container == null) {
-                container = DEFAULT_CACHE_CONTAINER;
-                mutableProperties.setProperty(CACHE_CONTAINER, container);
+                container = ManagedEmbeddedCacheManagerProvider.DEFAULT_CACHE_CONTAINER;
+                mutableProperties.setProperty(ManagedEmbeddedCacheManagerProvider.CACHE_CONTAINER, container);
             }
 
             /**
@@ -89,21 +76,26 @@ public class HibernateSecondLevelCache {
     public static Set<String> findCaches(Properties properties) {
         Set<String> caches = new HashSet<>();
 
-        caches.add(properties.getProperty(ENTITY_CACHE_RESOURCE_PROP, DEF_ENTITY_RESOURCE));
-        caches.add(properties.getProperty(IMMUTABLE_ENTITY_CACHE_RESOURCE_PROP, DEF_ENTITY_RESOURCE));
-        caches.add(properties.getProperty(COLLECTION_CACHE_RESOURCE_PROP, DEF_ENTITY_RESOURCE));
-        caches.add(properties.getProperty(NATURAL_ID_CACHE_RESOURCE_PROP, DEF_ENTITY_RESOURCE));
-        if (properties.containsKey(PENDING_PUTS_CACHE_RESOURCE_PROP)) {
-            caches.add(properties.getProperty(PENDING_PUTS_CACHE_RESOURCE_PROP));
+        String defaultEntityCache = "entity";
+        caches.add(properties.getProperty("hibernate.cache.infinispan.entity.cfg", defaultEntityCache));
+        caches.add(properties.getProperty("hibernate.cache.infinispan.immutable-entity.cfg", defaultEntityCache));
+        caches.add(properties.getProperty("hibernate.cache.infinispan.collection.cfg", defaultEntityCache));
+        caches.add(properties.getProperty("hibernate.cache.infinispan.naturalid.cfg", defaultEntityCache));
+
+        String pendingPutsProperty = "hibernate.cache.infinispan.pending-puts.cfg";
+        if (properties.containsKey(pendingPutsProperty)) {
+            caches.add(properties.getProperty(pendingPutsProperty));
         }
         if (Boolean.parseBoolean(properties.getProperty(AvailableSettings.USE_QUERY_CACHE))) {
-            caches.add(properties.getProperty(QUERY_CACHE_RESOURCE_PROP, DEF_QUERY_RESOURCE));
-            caches.add(properties.getProperty(TIMESTAMPS_CACHE_RESOURCE_PROP, DEF_QUERY_RESOURCE));
+            String defaultQueryCache = "local-query";
+            caches.add(properties.getProperty("hibernate.cache.infinispan.query.cfg", defaultQueryCache));
+            caches.add(properties.getProperty("hibernate.cache.infinispan.timestamps.cfg", defaultQueryCache));
         }
 
-        int length = INFINISPAN_CONFIG_RESOURCE_PROP.length();
-        String customRegionPrefix = INFINISPAN_CONFIG_RESOURCE_PROP.substring(0, length - 3) + properties.getProperty(AvailableSettings.CACHE_REGION_PREFIX, "");
-        String customRegionSuffix = INFINISPAN_CONFIG_RESOURCE_PROP.substring(length - 4, length);
+        String configProperty = "hibernate.cache.infinispan.cfg";
+        int length = configProperty.length();
+        String customRegionPrefix = configProperty.substring(0, length - 3) + properties.getProperty(AvailableSettings.CACHE_REGION_PREFIX, "");
+        String customRegionSuffix = configProperty.substring(length - 4, length);
 
         for (String propertyName : properties.stringPropertyNames()) {
             if (propertyName.startsWith(customRegionPrefix) && propertyName.endsWith(customRegionSuffix)) {
