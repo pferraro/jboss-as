@@ -36,6 +36,9 @@
           <param name="protocol" value="pbcast.GMS"/>
         </feature>
         <feature spec="subsystem.jgroups.stack.protocol">
+          <param name="protocol" value="UFC"/>
+        </feature>
+        <feature spec="subsystem.jgroups.stack.protocol">
           <param name="protocol" value="MFC"/>
         </feature>
         <feature spec="subsystem.jgroups.stack.protocol">
@@ -87,7 +90,7 @@
       </feature>
       <feature spec="subsystem.jgroups.channel">
         <param name="channel" value="ee"/>
-        <param name="stack" value="udp"/>
+        <param name="stack" value="tcp"/>
         <param name="cluster" value="ejb"/>
       </feature>
     </feature>
