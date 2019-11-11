@@ -24,11 +24,11 @@ package org.jboss.as.clustering.jgroups.subsystem;
 
 import org.jboss.as.clustering.controller.ResourceServiceConfiguratorFactory;
 import org.jboss.as.clustering.controller.SimpleResourceServiceHandler;
-import org.jboss.as.clustering.naming.BinderServiceConfigurator;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.clustering.jgroups.spi.JGroupsRequirement;
+import org.wildfly.clustering.naming.BinderServiceConfigurator;
 
 /**
  * @author Paul Ferraro

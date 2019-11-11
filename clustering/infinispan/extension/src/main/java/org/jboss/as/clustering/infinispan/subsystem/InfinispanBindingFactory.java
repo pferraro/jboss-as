@@ -21,8 +21,8 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.clustering.naming.JndiNameFactory;
 import org.jboss.as.naming.deployment.ContextNames;
+import org.wildfly.clustering.naming.JndiNameFactory;
 
 /**
  * Factory for creating JNDI bindings.

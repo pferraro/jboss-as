@@ -24,8 +24,8 @@ package org.wildfly.clustering.server;
 
 import java.util.function.BiFunction;
 
-import org.jboss.as.clustering.naming.JndiNameFactory;
 import org.jboss.as.naming.deployment.JndiName;
+import org.wildfly.clustering.naming.JndiNameFactory;
 
 /**
  * @author Paul Ferraro

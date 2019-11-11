@@ -50,9 +50,11 @@
         <module>common</module>
         <module>ee</module>
         <module>ejb</module>
+        <module>executor</module>
         <module>infinispan</module>
         <module>jgroups</module>
         <module>marshalling</module>
+        <module>naming</module>
         <module>server</module>
         <module>service</module>
         <module>singleton</module>

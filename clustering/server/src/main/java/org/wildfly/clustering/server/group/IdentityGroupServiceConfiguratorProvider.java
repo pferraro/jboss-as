@@ -22,8 +22,8 @@
 
 package org.wildfly.clustering.server.group;
 
-import org.jboss.as.clustering.naming.JndiNameFactory;
 import org.kohsuke.MetaInfServices;
+import org.wildfly.clustering.naming.JndiNameFactory;
 import org.wildfly.clustering.server.IdentityGroupRequirementServiceConfiguratorProvider;
 import org.wildfly.clustering.spi.ClusteringRequirement;
 

@@ -22,10 +22,10 @@
 
 package org.wildfly.clustering.server.provider;
 
-import org.jboss.as.clustering.naming.JndiNameFactory;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.clustering.spi.IdentityCacheServiceConfiguratorProvider;
 import org.wildfly.clustering.spi.ClusteringCacheRequirement;
+import org.wildfly.clustering.naming.JndiNameFactory;
 import org.wildfly.clustering.server.IdentityCacheRequirementServiceConfiguratorProvider;
 
 /**

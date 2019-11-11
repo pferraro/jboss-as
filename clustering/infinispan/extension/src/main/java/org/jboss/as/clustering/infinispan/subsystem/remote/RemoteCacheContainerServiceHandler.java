@@ -32,7 +32,6 @@ import org.jboss.as.clustering.controller.ResourceServiceConfiguratorFactory;
 import org.jboss.as.clustering.controller.ServiceValueRegistry;
 import org.jboss.as.clustering.controller.SimpleResourceServiceHandler;
 import org.jboss.as.clustering.infinispan.subsystem.InfinispanBindingFactory;
-import org.jboss.as.clustering.naming.BinderServiceConfigurator;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
@@ -41,6 +40,7 @@ import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.wildfly.clustering.infinispan.client.RemoteCacheContainer;
+import org.wildfly.clustering.naming.BinderServiceConfigurator;
 import org.wildfly.clustering.service.ServiceConfigurator;
 
 /**

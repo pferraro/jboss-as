@@ -34,13 +34,13 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExecutorFactoryConfiguration;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.commons.executors.ExecutorFactory;
-import org.jboss.as.clustering.context.DefaultThreadFactory;
 import org.jboss.as.clustering.infinispan.subsystem.ComponentServiceConfigurator;
 import org.jboss.as.clustering.infinispan.subsystem.ThreadPoolDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
+import org.wildfly.clustering.executor.contextual.DefaultThreadFactory;
 import org.wildfly.clustering.service.ServiceConfigurator;
 
 /**

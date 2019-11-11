@@ -28,10 +28,10 @@ import java.util.Collections;
 import java.util.function.BiFunction;
 
 import org.jboss.as.clustering.controller.CapabilityServiceConfigurator;
-import org.jboss.as.clustering.naming.BinderServiceConfigurator;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.naming.deployment.JndiName;
 import org.jboss.msc.service.ServiceName;
+import org.wildfly.clustering.naming.BinderServiceConfigurator;
 import org.wildfly.clustering.service.ServiceNameRegistry;
 import org.wildfly.clustering.spi.CacheServiceConfiguratorProvider;
 import org.wildfly.clustering.spi.ClusteringCacheRequirement;

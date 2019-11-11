@@ -658,6 +658,12 @@
 
             <dependency>
                 <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-clustering-executor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>wildfly-clustering-infinispan-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -706,6 +712,12 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>wildfly-clustering-marshalling-spi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-clustering-naming</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

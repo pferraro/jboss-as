@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.undertow.servlet.api.Deployment;
 
-import org.jboss.as.clustering.context.DefaultThreadFactory;
 import org.jboss.as.server.suspend.ServerActivity;
 import org.jboss.as.server.suspend.ServerActivityCallback;
 import org.jboss.logging.Logger;
@@ -42,6 +41,7 @@ import org.jboss.modcluster.container.Server;
 import org.jboss.msc.Service;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
+import org.wildfly.clustering.executor.contextual.DefaultThreadFactory;
 import org.wildfly.extension.undertow.Host;
 import org.wildfly.extension.undertow.UndertowEventListener;
 import org.wildfly.extension.undertow.UndertowService;

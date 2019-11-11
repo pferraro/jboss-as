@@ -44,6 +44,10 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>wildfly-clustering-executor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>wildfly-mod_cluster-extension</artifactId>
         </dependency>
         <dependency>

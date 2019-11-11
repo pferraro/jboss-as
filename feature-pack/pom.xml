@@ -2521,6 +2521,17 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>wildfly-clustering-executor</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>wildfly-clustering-infinispan-client</artifactId>
             <exclusions>
                 <exclusion>
@@ -2614,6 +2625,17 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>wildfly-clustering-marshalling-spi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>wildfly-clustering-naming</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>

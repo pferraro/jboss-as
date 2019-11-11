@@ -3033,6 +3033,7 @@
             </exclusions>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>wildfly-clustering-ee-cache</artifactId>
@@ -3092,6 +3093,18 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>wildfly-clustering-ejb-spi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>wildfly-clustering-executor</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
@@ -3205,6 +3218,18 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>wildfly-clustering-marshalling-spi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>wildfly-clustering-naming</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>

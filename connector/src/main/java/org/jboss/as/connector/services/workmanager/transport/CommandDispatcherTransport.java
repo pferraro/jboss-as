@@ -45,11 +45,11 @@ import org.wildfly.clustering.dispatcher.Command;
 import org.wildfly.clustering.dispatcher.CommandDispatcher;
 import org.wildfly.clustering.dispatcher.CommandDispatcherException;
 import org.wildfly.clustering.dispatcher.CommandDispatcherFactory;
+import org.wildfly.clustering.executor.concurrent.ServiceExecutor;
+import org.wildfly.clustering.executor.concurrent.StampedLockServiceExecutor;
 import org.wildfly.clustering.group.GroupListener;
 import org.wildfly.clustering.group.Membership;
 import org.wildfly.clustering.group.Node;
-import org.wildfly.clustering.service.concurrent.ServiceExecutor;
-import org.wildfly.clustering.service.concurrent.StampedLockServiceExecutor;
 import org.wildfly.common.function.ExceptionRunnable;
 import org.wildfly.common.function.ExceptionSupplier;
 

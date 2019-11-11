@@ -28,9 +28,9 @@ import java.util.Collections;
 import java.util.function.Function;
 
 import org.jboss.as.clustering.controller.CapabilityServiceConfigurator;
-import org.jboss.as.clustering.naming.BinderServiceConfigurator;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.naming.deployment.JndiName;
+import org.wildfly.clustering.naming.BinderServiceConfigurator;
 import org.wildfly.clustering.service.ServiceNameRegistry;
 import org.wildfly.clustering.spi.ClusteringRequirement;
 import org.wildfly.clustering.spi.GroupServiceConfiguratorProvider;
