@@ -22,26 +22,52 @@
 
 package org.wildfly.extension.microprofile.metrics.deployment;
 
+import org.jboss.as.controller.capability.CapabilityServiceSupport;
+import org.jboss.as.controller.capability.CapabilityServiceSupport.NoSuchCapabilityException;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.server.deployment.AttachmentKey;
+import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentModelUtils;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
+import org.jboss.as.weld.Capabilities;
+import org.jboss.as.weld.WeldCapability;
+import org.jboss.modules.Module;
 import org.wildfly.extension.microprofile.metrics.MetricCollector;
+import org.wildfly.security.manager.WildFlySecurityManager;
+
+import io.smallrye.metrics.setup.MetricCdiInjectionExtension;
 
 public class DeploymentMetricProcessor implements DeploymentUnitProcessor {
 
     static final AttachmentKey<MetricCollector> METRICS_COLLECTOR = AttachmentKey.create(MetricCollector.class);
 
-    private Resource rootResource;
-    private ManagementResourceRegistration managementResourceRegistration;
-
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) {
-        rootResource = phaseContext.getDeploymentUnit().getAttachment(DeploymentModelUtils.DEPLOYMENT_RESOURCE);
-        managementResourceRegistration = phaseContext.getDeploymentUnit().getAttachment(DeploymentModelUtils.MUTABLE_REGISTRATION_ATTACHMENT);
+        DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
+
+        // Register Metric CDI extension
+        Module module = deploymentUnit.getAttachment(Attachments.MODULE);
+        CapabilityServiceSupport capabilitySupport = deploymentUnit.getAttachment(Attachments.CAPABILITY_SERVICE_SUPPORT);
+        try {
+            WeldCapability weld = capabilitySupport.getCapabilityRuntimeAPI(Capabilities.WELD_CAPABILITY_NAME, WeldCapability.class);
+            // Is this necessary?
+            ClassLoader loader = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(module.getClassLoader());
+            try {
+                weld.registerExtensionInstance(new MetricCdiInjectionExtension(), deploymentUnit);
+            } finally {
+                WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(loader);
+            }
+        } catch (NoSuchCapabilityException e) {
+            // Our requirement on microprofile-config guarantees that the weld capability exists
+            throw new IllegalStateException(e);
+        }
+
+        Resource rootResource = phaseContext.getDeploymentUnit().getAttachment(DeploymentModelUtils.DEPLOYMENT_RESOURCE);
+        ManagementResourceRegistration managementResourceRegistration = phaseContext.getDeploymentUnit().getAttachment(DeploymentModelUtils.MUTABLE_REGISTRATION_ATTACHMENT);
 
         DeploymentMetricService.install(phaseContext.getServiceTarget(), phaseContext.getDeploymentUnit(), rootResource, managementResourceRegistration);
     }
@@ -49,5 +75,4 @@ public class DeploymentMetricProcessor implements DeploymentUnitProcessor {
     @Override
     public void undeploy(DeploymentUnit context) {
     }
-
 }
