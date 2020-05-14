@@ -75,7 +75,6 @@ import org.wildfly.clustering.infinispan.spi.distribution.CacheLocality;
 import org.wildfly.clustering.infinispan.spi.distribution.ConsistentHashLocality;
 import org.wildfly.clustering.infinispan.spi.distribution.Locality;
 import org.wildfly.clustering.infinispan.spi.distribution.SimpleLocality;
-import org.wildfly.clustering.registry.Registry;
 import org.wildfly.clustering.spi.dispatcher.CommandDispatcherFactory;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
@@ -100,7 +99,6 @@ public class InfinispanBeanManager<I, T> implements BeanManager<I, T, Transactio
     private final BeanGroupFactory<I, T> groupFactory;
     private final IdentifierFactory<I> identifierFactory;
     private final KeyAffinityService<BeanKey<I>> affinity;
-    private final Registry<String, ?> registry;
     private final CommandDispatcherFactory dispatcherFactory;
     private final ExpirationConfiguration<T> expiration;
     private final PassivationConfiguration<T> passivation;
@@ -108,6 +106,7 @@ public class InfinispanBeanManager<I, T> implements BeanManager<I, T, Transactio
     private final Predicate<Map.Entry<? super BeanKey<I>, ? super BeanEntry<I>>> filter;
     private final AtomicReference<Future<?>> rehashFuture = new AtomicReference<>();
     private final AtomicInteger rehashTopology = new AtomicInteger();
+    private final Group group;
     private final Function<BeanKey<I>, Node> primaryOwnerLocator;
 
     private volatile Scheduler<I, ImmutableBeanEntry<I>> scheduler;
@@ -127,11 +126,11 @@ public class InfinispanBeanManager<I, T> implements BeanManager<I, T, Transactio
         KeyGenerator<BeanKey<I>> beanKeyGenerator = () -> beanConfiguration.getFactory().createKey(identifierFactory.createIdentifier());
         this.affinity = affinityFactory.createService(this.cache, beanKeyGenerator);
         this.identifierFactory = () -> this.affinity.getKeyForAddress(address).getId();
-        this.registry = configuration.getRegistry();
         this.dispatcherFactory = configuration.getCommandDispatcherFactory();
         this.expiration = configuration.getExpirationConfiguration();
         this.passivation = configuration.getPassivationConfiguration();
-        this.primaryOwnerLocator = new PrimaryOwnerLocator<>(beanConfiguration.getCache(), configuration.getNodeFactory(), configuration.getRegistry().getGroup());
+        this.primaryOwnerLocator = new PrimaryOwnerLocator<>(beanConfiguration.getCache(), configuration.getGroup());
+        this.group = configuration.getGroup();
     }
 
     @Override
@@ -196,19 +195,15 @@ public class InfinispanBeanManager<I, T> implements BeanManager<I, T, Transactio
 
     @Override
     public Affinity getStrictAffinity() {
-        Group group = this.registry.getGroup();
-        return this.cache.getCacheConfiguration().clustering().cacheMode().isClustered() ? new ClusterAffinity(group.getName()) : new NodeAffinity(this.registry.getEntry(group.getLocalMember()).getKey());
+        return this.cache.getCacheConfiguration().clustering().cacheMode().isClustered() ? new ClusterAffinity(this.group.getName()) : new NodeAffinity(this.group.getLocalMember().getName());
     }
 
     @Override
     public Affinity getWeakAffinity(I id) {
         CacheMode mode = this.cache.getCacheConfiguration().clustering().cacheMode();
         if (mode.isClustered()) {
-            Node node = !mode.isScattered() ? this.locatePrimaryOwner(id) : this.registry.getGroup().getLocalMember();
-            Map.Entry<String, ?> entry = this.registry.getEntry(node);
-            if (entry != null) {
-                return new NodeAffinity(entry.getKey());
-            }
+            Node member = !mode.isScattered() ? this.locatePrimaryOwner(id) : this.group.getLocalMember();
+            return new NodeAffinity(member.getName());
         }
         return Affinity.NONE;
     }
