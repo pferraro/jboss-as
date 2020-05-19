@@ -63,9 +63,9 @@ public class EJBRemotingConnectorClientMappingsEntryProviderService implements C
     private volatile String clientMappingsClusterName;
     private volatile ServiceName name;
 
-    public EJBRemotingConnectorClientMappingsEntryProviderService(String clientMappingsClusterName, ServiceName remotingConnectorInfoServiceName) {
+    public EJBRemotingConnectorClientMappingsEntryProviderService(String clientMappingsClusterName, String connectorName) {
         this.clientMappingsClusterName = clientMappingsClusterName;
-        this.remotingConnectorInfo = new ServiceSupplierDependency<>(remotingConnectorInfoServiceName);
+        this.remotingConnectorInfo = new ServiceSupplierDependency<>(RemotingConnectorBindingInfoService.serviceName(connectorName));
     }
 
     @Override
