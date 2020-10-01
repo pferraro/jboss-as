@@ -29,16 +29,16 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
+import org.jboss.modules.Module;
 import org.wildfly.clustering.service.ServiceConfigurator;
 import org.wildfly.clustering.web.hotrod.session.HotRodSessionManagementConfiguration;
 import org.wildfly.clustering.web.hotrod.session.HotRodSessionManagementProvider;
-import org.wildfly.clustering.web.session.DistributableSessionManagementConfiguration;
 import org.wildfly.clustering.web.session.DistributableSessionManagementProvider;
 
 /**
  * @author Paul Ferraro
  */
-public class HotRodSessionManagementServiceConfigurator extends SessionManagementServiceConfigurator<DistributableSessionManagementConfiguration> implements HotRodSessionManagementConfiguration {
+public class HotRodSessionManagementServiceConfigurator extends SessionManagementServiceConfigurator<HotRodSessionManagementConfiguration<Module>> implements HotRodSessionManagementConfiguration<Module> {
 
     private volatile String containerName;
     private volatile String configurationName;
@@ -55,7 +55,7 @@ public class HotRodSessionManagementServiceConfigurator extends SessionManagemen
     }
 
     @Override
-    public DistributableSessionManagementProvider get() {
+    public DistributableSessionManagementProvider<HotRodSessionManagementConfiguration<Module>> get() {
         return new HotRodSessionManagementProvider(this);
     }
 

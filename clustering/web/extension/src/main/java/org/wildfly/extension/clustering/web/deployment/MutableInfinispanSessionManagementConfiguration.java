@@ -24,12 +24,13 @@ package org.wildfly.extension.clustering.web.deployment;
 
 import java.util.function.UnaryOperator;
 
+import org.jboss.modules.Module;
 import org.wildfly.clustering.web.infinispan.session.InfinispanSessionManagementConfiguration;
 
 /**
  * @author Paul Ferraro
  */
-public class MutableInfinispanSessionManagementConfiguration extends MutableSessionManagementConfiguration implements InfinispanSessionManagementConfiguration {
+public class MutableInfinispanSessionManagementConfiguration extends MutableSessionManagementConfiguration implements InfinispanSessionManagementConfiguration<Module> {
 
     private String containerName;
     private String cacheName;

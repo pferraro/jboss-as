@@ -29,6 +29,7 @@ import org.wildfly.clustering.ee.Batcher;
 import org.wildfly.clustering.ee.cache.ConcurrentManager;
 import org.wildfly.clustering.ee.cache.tx.TransactionBatch;
 import org.wildfly.clustering.ee.hotrod.tx.HotRodBatcher;
+import org.wildfly.clustering.marshalling.spi.ByteBufferMarshaller;
 import org.wildfly.clustering.marshalling.spi.MarshalledValue;
 import org.wildfly.clustering.web.IdentifierFactory;
 import org.wildfly.clustering.web.cache.session.CompositeSessionMetaDataEntry;
@@ -46,21 +47,21 @@ import org.wildfly.clustering.web.session.SessionManagerFactory;
 
 /**
  * Factory for creating session managers.
+ * @param <M> the deployment module type
  * @param <S> the HttpSession specification type
  * @param <SC> the ServletContext specification type
  * @param <AL> the HttpSessionAttributeListener specification type
  * @param <LC> the local context type
- * @param <MC> the marshalling context type
  * @author Paul Ferraro
  */
-public class HotRodSessionManagerFactory<S, SC, AL, MC, LC> implements SessionManagerFactory<SC, LC, TransactionBatch> {
+public class HotRodSessionManagerFactory<M, S, SC, AL, LC> implements SessionManagerFactory<SC, LC, TransactionBatch> {
 
     private final Registrar<SessionExpirationListener> expirationRegistrar;
     private final Batcher<TransactionBatch> batcher;
     private final Duration transactionTimeout;
     private final SessionFactory<SC, CompositeSessionMetaDataEntry<LC>, ?, LC> factory;
 
-    public HotRodSessionManagerFactory(HotRodSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> config) {
+    public HotRodSessionManagerFactory(HotRodSessionManagerFactoryConfiguration<M, S, SC, AL, LC> config) {
         SessionMetaDataFactory<CompositeSessionMetaDataEntry<LC>> metaDataFactory = new HotRodSessionMetaDataFactory<>(config);
         HotRodSessionFactory<SC, ?, LC> sessionFactory = new HotRodSessionFactory<>(config, metaDataFactory, this.createSessionAttributesFactory(config), config.getLocalContextFactory());
         this.factory = sessionFactory;
@@ -113,7 +114,7 @@ public class HotRodSessionManagerFactory<S, SC, AL, MC, LC> implements SessionMa
         this.factory.close();
     }
 
-    private SessionAttributesFactory<SC, ?> createSessionAttributesFactory(HotRodSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> configuration) {
+    private SessionAttributesFactory<SC, ?> createSessionAttributesFactory(HotRodSessionManagerFactoryConfiguration<M, S, SC, AL, LC> configuration) {
         switch (configuration.getAttributePersistenceStrategy()) {
             case FINE: {
                 return new FineSessionAttributesFactory<>(new HotRodMarshalledValueSessionAttributesFactoryConfiguration<>(configuration));
@@ -128,10 +129,10 @@ public class HotRodSessionManagerFactory<S, SC, AL, MC, LC> implements SessionMa
         }
     }
 
-    private static class HotRodMarshalledValueSessionAttributesFactoryConfiguration<S, SC, AL, V, MC, LC> extends MarshalledValueSessionAttributesFactoryConfiguration<S, SC, AL, V, MC, LC> implements HotRodSessionAttributesFactoryConfiguration<S, SC, AL, V, MarshalledValue<V, MC>> {
-        private final HotRodSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> configuration;
+    private static class HotRodMarshalledValueSessionAttributesFactoryConfiguration<M, S, SC, AL, V, LC> extends MarshalledValueSessionAttributesFactoryConfiguration<S, SC, AL, V, LC> implements HotRodSessionAttributesFactoryConfiguration<S, SC, AL, V, MarshalledValue<V, ByteBufferMarshaller>> {
+        private final HotRodSessionManagerFactoryConfiguration<M, S, SC, AL, LC> configuration;
 
-        HotRodMarshalledValueSessionAttributesFactoryConfiguration(HotRodSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> configuration) {
+        HotRodMarshalledValueSessionAttributesFactoryConfiguration(HotRodSessionManagerFactoryConfiguration<M, S, SC, AL, LC> configuration) {
             super(configuration);
             this.configuration = configuration;
         }

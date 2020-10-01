@@ -23,6 +23,7 @@
 package org.wildfly.clustering.web.hotrod.session;
 
 import org.jboss.as.clustering.controller.CapabilityServiceConfigurator;
+import org.jboss.modules.Module;
 import org.wildfly.clustering.web.WebDeploymentConfiguration;
 import org.wildfly.clustering.web.cache.routing.LocalRouteLocatorServiceConfigurator;
 import org.wildfly.clustering.web.session.DistributableSessionManagementProvider;
@@ -31,16 +32,16 @@ import org.wildfly.clustering.web.session.SessionManagerFactoryConfiguration;
 /**
  * @author Paul Ferraro
  */
-public class HotRodSessionManagementProvider implements DistributableSessionManagementProvider {
+public class HotRodSessionManagementProvider implements DistributableSessionManagementProvider<HotRodSessionManagementConfiguration<Module>> {
 
-    private final HotRodSessionManagementConfiguration configuration;
+    private final HotRodSessionManagementConfiguration<Module> configuration;
 
-    public HotRodSessionManagementProvider(HotRodSessionManagementConfiguration configuration) {
+    public HotRodSessionManagementProvider(HotRodSessionManagementConfiguration<Module> configuration) {
         this.configuration = configuration;
     }
 
     @Override
-    public <S, SC, AL, MC, LC> CapabilityServiceConfigurator getSessionManagerFactoryServiceConfigurator(SessionManagerFactoryConfiguration<S, SC, AL, MC, LC> config) {
+    public <S, SC, AL, LC> CapabilityServiceConfigurator getSessionManagerFactoryServiceConfigurator(SessionManagerFactoryConfiguration<S, SC, AL, LC> config) {
         return new HotRodSessionManagerFactoryServiceConfigurator<>(this.configuration, config);
     }
 
@@ -49,7 +50,8 @@ public class HotRodSessionManagementProvider implements DistributableSessionMana
         return new LocalRouteLocatorServiceConfigurator(configuration);
     }
 
-    public HotRodSessionManagementConfiguration getSessionManagementConfiguration() {
+    @Override
+    public HotRodSessionManagementConfiguration<Module> getSessionManagementConfiguration() {
         return this.configuration;
     }
 }

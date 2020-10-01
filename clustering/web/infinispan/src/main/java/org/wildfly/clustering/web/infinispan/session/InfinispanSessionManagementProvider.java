@@ -23,6 +23,7 @@
 package org.wildfly.clustering.web.infinispan.session;
 
 import org.jboss.as.clustering.controller.CapabilityServiceConfigurator;
+import org.jboss.modules.Module;
 import org.wildfly.clustering.web.WebDeploymentConfiguration;
 import org.wildfly.clustering.web.routing.RouteLocatorServiceConfiguratorFactory;
 import org.wildfly.clustering.web.session.DistributableSessionManagementProvider;
@@ -32,18 +33,18 @@ import org.wildfly.clustering.web.session.SessionManagerFactoryConfiguration;
  * An Infinispan cache-based {@link DistributableSessionManagementProvider}.
  * @author Paul Ferraro
  */
-public class InfinispanSessionManagementProvider implements DistributableSessionManagementProvider {
+public class InfinispanSessionManagementProvider implements DistributableSessionManagementProvider<InfinispanSessionManagementConfiguration<Module>> {
 
-    private final InfinispanSessionManagementConfiguration configuration;
-    private final RouteLocatorServiceConfiguratorFactory<InfinispanSessionManagementConfiguration> factory;
+    private final InfinispanSessionManagementConfiguration<Module> configuration;
+    private final RouteLocatorServiceConfiguratorFactory<InfinispanSessionManagementConfiguration<Module>> factory;
 
-    public InfinispanSessionManagementProvider(InfinispanSessionManagementConfiguration configuration, RouteLocatorServiceConfiguratorFactory<InfinispanSessionManagementConfiguration> factory) {
+    public InfinispanSessionManagementProvider(InfinispanSessionManagementConfiguration<Module> configuration, RouteLocatorServiceConfiguratorFactory<InfinispanSessionManagementConfiguration<Module>> factory) {
         this.configuration = configuration;
         this.factory = factory;
     }
 
     @Override
-    public <S, SC, AL, MC, LC> CapabilityServiceConfigurator getSessionManagerFactoryServiceConfigurator(SessionManagerFactoryConfiguration<S, SC, AL, MC, LC> config) {
+    public <S, SC, AL, LC> CapabilityServiceConfigurator getSessionManagerFactoryServiceConfigurator(SessionManagerFactoryConfiguration<S, SC, AL, LC> config) {
         return new InfinispanSessionManagerFactoryServiceConfigurator<>(this.configuration, config);
     }
 
@@ -52,11 +53,12 @@ public class InfinispanSessionManagementProvider implements DistributableSession
         return this.factory.createRouteLocatorServiceConfigurator(this.configuration, config);
     }
 
-    public InfinispanSessionManagementConfiguration getSessionManagementConfiguration() {
+    @Override
+    public InfinispanSessionManagementConfiguration<Module> getSessionManagementConfiguration() {
         return this.configuration;
     }
 
-    public RouteLocatorServiceConfiguratorFactory<InfinispanSessionManagementConfiguration> getRouteLocatorServiceConfiguratorFactory() {
+    public RouteLocatorServiceConfiguratorFactory<InfinispanSessionManagementConfiguration<Module>> getRouteLocatorServiceConfiguratorFactory() {
         return this.factory;
     }
 }

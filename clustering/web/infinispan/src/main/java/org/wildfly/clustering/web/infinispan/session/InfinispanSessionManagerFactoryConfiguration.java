@@ -32,11 +32,10 @@ import org.wildfly.clustering.web.session.SessionManagerFactoryConfiguration;
  * @param <S> the HttpSession specification type
  * @param <SC> the ServletContext specification type
  * @param <AL> the HttpSessionAttributeListener specification type
- * @param <MC> the marshalling context type
  * @param <LC> the local context type
  * @author Paul Ferraro
  */
-public interface InfinispanSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> extends DistributableSessionManagementConfiguration, SessionManagerFactoryConfiguration<S, SC, AL, MC, LC>, InfinispanSessionMetaDataFactoryConfiguration {
+public interface InfinispanSessionManagerFactoryConfiguration<M, S, SC, AL, LC> extends DistributableSessionManagementConfiguration<M>, SessionManagerFactoryConfiguration<S, SC, AL, LC>, InfinispanSessionMetaDataFactoryConfiguration {
 
     KeyAffinityServiceFactory getKeyAffinityServiceFactory();
 

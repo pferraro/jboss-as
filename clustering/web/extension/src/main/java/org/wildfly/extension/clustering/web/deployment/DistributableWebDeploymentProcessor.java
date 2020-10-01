@@ -26,6 +26,8 @@ import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
+import org.jboss.modules.Module;
+import org.wildfly.clustering.web.session.DistributableSessionManagementConfiguration;
 import org.wildfly.clustering.web.session.DistributableSessionManagementProvider;
 
 /**
@@ -37,7 +39,7 @@ public class DistributableWebDeploymentProcessor implements DeploymentUnitProces
     @Override
     public void deploy(DeploymentPhaseContext context) throws DeploymentUnitProcessingException {
         DeploymentUnit unit = context.getDeploymentUnit();
-        DistributableSessionManagementProvider provider = context.getAttachment(DistributableSessionManagementProvider.ATTACHMENT_KEY);
+        DistributableSessionManagementProvider<DistributableSessionManagementConfiguration<Module>> provider = context.getAttachment(DistributableSessionManagementProvider.ATTACHMENT_KEY);
         if (provider != null) {
             unit.putAttachment(DistributableSessionManagementProvider.ATTACHMENT_KEY, provider);
         }

@@ -34,7 +34,7 @@ import org.wildfly.clustering.ee.CompositeIterable;
 import org.wildfly.clustering.ee.Immutability;
 import org.wildfly.clustering.ee.immutable.CompositeImmutability;
 import org.wildfly.clustering.ee.immutable.DefaultImmutability;
-import org.wildfly.clustering.marshalling.spi.MarshalledValueFactory;
+import org.wildfly.clustering.marshalling.spi.ByteBufferMarshaller;
 import org.wildfly.clustering.web.LocalContextFactory;
 import org.wildfly.clustering.web.container.SessionManagerFactoryConfiguration;
 import org.wildfly.clustering.web.session.SpecificationProvider;
@@ -43,17 +43,17 @@ import org.wildfly.clustering.web.session.SessionAttributeImmutability;
 /**
  * @author Paul Ferraro
  */
-public class SessionManagerFactoryConfigurationAdapter<C> extends WebDeploymentConfigurationAdapter implements org.wildfly.clustering.web.session.SessionManagerFactoryConfiguration<HttpSession, ServletContext, HttpSessionActivationListener, C, LocalSessionContext> {
+public class SessionManagerFactoryConfigurationAdapter extends WebDeploymentConfigurationAdapter implements org.wildfly.clustering.web.session.SessionManagerFactoryConfiguration<HttpSession, ServletContext, HttpSessionActivationListener, LocalSessionContext> {
 
     private final Integer maxActiveSessions;
-    private final MarshalledValueFactory<C> marshalledValueFactory;
+    private final ByteBufferMarshaller marshaller;
     private final LocalContextFactory<LocalSessionContext> localContextFactory = new LocalSessionContextFactory();
     private final Immutability immutability;
 
-    public SessionManagerFactoryConfigurationAdapter(SessionManagerFactoryConfiguration configuration, MarshalledValueFactory<C> marshalledValueFactory, Immutability immutability) {
+    public SessionManagerFactoryConfigurationAdapter(SessionManagerFactoryConfiguration configuration, ByteBufferMarshaller marshaller, Immutability immutability) {
         super(configuration);
         this.maxActiveSessions = configuration.getMaxActiveSessions();
-        this.marshalledValueFactory = marshalledValueFactory;
+        this.marshaller = marshaller;
         ServiceLoader<Immutability> loadedImmutability = ServiceLoader.load(Immutability.class, Immutability.class.getClassLoader());
         this.immutability = new CompositeImmutability(new CompositeIterable<>(EnumSet.allOf(DefaultImmutability.class), EnumSet.allOf(SessionAttributeImmutability.class), EnumSet.allOf(UndertowSessionAttributeImmutability.class), loadedImmutability, Collections.singleton(immutability)));
     }
@@ -64,8 +64,8 @@ public class SessionManagerFactoryConfigurationAdapter<C> extends WebDeploymentC
     }
 
     @Override
-    public MarshalledValueFactory<C> getMarshalledValueFactory() {
-        return this.marshalledValueFactory;
+    public ByteBufferMarshaller getMarshaller() {
+        return this.marshaller;
     }
 
     @Override

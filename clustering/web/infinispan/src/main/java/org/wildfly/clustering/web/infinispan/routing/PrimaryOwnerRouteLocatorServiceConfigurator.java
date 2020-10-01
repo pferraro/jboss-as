@@ -48,7 +48,7 @@ import org.wildfly.clustering.spi.ClusteringCacheRequirement;
 import org.wildfly.clustering.spi.NodeFactory;
 import org.wildfly.clustering.web.WebDeploymentConfiguration;
 import org.wildfly.clustering.web.cache.routing.RouteLocatorServiceNameProvider;
-import org.wildfly.clustering.web.infinispan.session.InfinispanSessionManagementConfiguration;
+import org.wildfly.clustering.web.infinispan.InfinispanCacheConfiguration;
 import org.wildfly.clustering.web.routing.RouteLocator;
 
 /**
@@ -57,16 +57,16 @@ import org.wildfly.clustering.web.routing.RouteLocator;
  */
 public class PrimaryOwnerRouteLocatorServiceConfigurator extends RouteLocatorServiceNameProvider implements CapabilityServiceConfigurator, PrimaryOwnerRouteLocatorConfiguration, Supplier<RouteLocator> {
 
-    private final InfinispanSessionManagementConfiguration managementConfiguration;
+    private final InfinispanCacheConfiguration configuration;
     private final WebDeploymentConfiguration deploymentConfiguration;
 
     private volatile SupplierDependency<Registry<String, Void>> registry;
     private volatile SupplierDependency<Cache<GroupedKey<String>, ?>> cache;
     private volatile SupplierDependency<NodeFactory<Address>> factory;
 
-    public PrimaryOwnerRouteLocatorServiceConfigurator(InfinispanSessionManagementConfiguration managementConfiguration, WebDeploymentConfiguration deploymentConfiguration) {
+    public PrimaryOwnerRouteLocatorServiceConfigurator(InfinispanCacheConfiguration configuration, WebDeploymentConfiguration deploymentConfiguration) {
         super(deploymentConfiguration);
-        this.managementConfiguration = managementConfiguration;
+        this.configuration = configuration;
         this.deploymentConfiguration = deploymentConfiguration;
     }
 
@@ -86,9 +86,9 @@ public class PrimaryOwnerRouteLocatorServiceConfigurator extends RouteLocatorSer
 
     @Override
     public ServiceConfigurator configure(CapabilityServiceSupport support) {
-        this.registry = new ServiceSupplierDependency<>(ClusteringCacheRequirement.REGISTRY.getServiceName(support, this.managementConfiguration.getContainerName(), this.deploymentConfiguration.getServerName()));
-        this.factory = new ServiceSupplierDependency<>(ClusteringCacheRequirement.GROUP.getServiceName(support, this.managementConfiguration.getContainerName(), this.deploymentConfiguration.getServerName()));
-        this.cache = new ServiceSupplierDependency<>(InfinispanCacheRequirement.CACHE.getServiceName(support, this.managementConfiguration.getContainerName(), this.deploymentConfiguration.getDeploymentName()));
+        this.registry = new ServiceSupplierDependency<>(ClusteringCacheRequirement.REGISTRY.getServiceName(support, this.configuration.getContainerName(), this.deploymentConfiguration.getServerName()));
+        this.factory = new ServiceSupplierDependency<>(ClusteringCacheRequirement.GROUP.getServiceName(support, this.configuration.getContainerName(), this.deploymentConfiguration.getServerName()));
+        this.cache = new ServiceSupplierDependency<>(InfinispanCacheRequirement.CACHE.getServiceName(support, this.configuration.getContainerName(), this.deploymentConfiguration.getDeploymentName()));
         return this;
     }
 

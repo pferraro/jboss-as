@@ -22,11 +22,17 @@
 
 package org.wildfly.clustering.web.session;
 
+import java.util.function.Function;
+
+import org.wildfly.clustering.marshalling.spi.ByteBufferMarshaller;
+
 /**
  * Encapsulates the configuration of a {@link DistributableSessionManagementProvider} profile.
  * @author Paul Ferraro
  */
-public interface DistributableSessionManagementConfiguration {
+public interface DistributableSessionManagementConfiguration<M> {
 
     SessionAttributePersistenceStrategy getAttributePersistenceStrategy();
+
+    Function<M, ByteBufferMarshaller> getMarshallerFactory();
 }

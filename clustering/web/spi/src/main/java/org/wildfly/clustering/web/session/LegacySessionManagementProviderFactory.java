@@ -23,11 +23,12 @@
 package org.wildfly.clustering.web.session;
 
 import org.jboss.metadata.web.jboss.ReplicationConfig;
+import org.jboss.modules.Module;
 
 /**
  * @author Paul Ferraro
  */
 @Deprecated
-public interface LegacySessionManagementProviderFactory {
-    DistributableSessionManagementProvider createSessionManagerProvider(ReplicationConfig config);
+public interface LegacySessionManagementProviderFactory<C extends DistributableSessionManagementConfiguration<Module>> {
+    DistributableSessionManagementProvider<C> createSessionManagerProvider(ReplicationConfig config);
 }

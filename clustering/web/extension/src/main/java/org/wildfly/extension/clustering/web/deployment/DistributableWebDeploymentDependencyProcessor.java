@@ -36,12 +36,14 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.web.common.WarMetaData;
 import org.jboss.as.web.session.SharedSessionManagerConfig;
 import org.jboss.logging.Logger;
+import org.jboss.modules.Module;
 import org.jboss.msc.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.wildfly.clustering.web.WebProviderRequirement;
+import org.wildfly.clustering.web.session.DistributableSessionManagementConfiguration;
 import org.wildfly.clustering.web.session.DistributableSessionManagementProvider;
 
 /**
@@ -67,7 +69,7 @@ public class DistributableWebDeploymentDependencyProcessor implements Deployment
             DistributableWebDeploymentConfiguration config = unit.getAttachment(CONFIGURATION_KEY);
 
             String name = (config != null) ? config.getSessionManagementName() : null;
-            DistributableSessionManagementProvider management = (name == null) && (config != null) ? config.getSessionManagement() : null;
+            DistributableSessionManagementProvider<? extends DistributableSessionManagementConfiguration<Module>> management = (name == null) && (config != null) ? config.getSessionManagement() : null;
             List<String> immutableClasses = (config != null) ? config.getImmutableClasses() : Collections.emptyList();
             for (String immutableClass : immutableClasses) {
                 unit.addToAttachmentList(DistributableSessionManagementProvider.IMMUTABILITY_ATTACHMENT_KEY, immutableClass);
@@ -81,7 +83,7 @@ public class DistributableWebDeploymentDependencyProcessor implements Deployment
                 ServiceName serviceName = WebProviderRequirement.SESSION_MANAGEMENT_PROVIDER.getServiceName(support, deploymentName);
 
                 ServiceBuilder<?> builder = target.addService(serviceName);
-                Consumer<DistributableSessionManagementProvider> injector = builder.provides(serviceName);
+                Consumer<DistributableSessionManagementProvider<? extends DistributableSessionManagementConfiguration<Module>>> injector = builder.provides(serviceName);
                 Service service = Service.newInstance(injector, management);
                 builder.setInstance(service).setInitialMode(ServiceController.Mode.ON_DEMAND).install();
 

@@ -45,6 +45,7 @@ import org.wildfly.clustering.infinispan.spi.affinity.KeyAffinityServiceFactory;
 import org.wildfly.clustering.infinispan.spi.distribution.CacheLocality;
 import org.wildfly.clustering.infinispan.spi.distribution.Locality;
 import org.wildfly.clustering.infinispan.spi.distribution.SimpleLocality;
+import org.wildfly.clustering.marshalling.spi.ByteBufferMarshaller;
 import org.wildfly.clustering.marshalling.spi.MarshalledValue;
 import org.wildfly.clustering.spi.dispatcher.CommandDispatcherFactory;
 import org.wildfly.clustering.web.IdentifierFactory;
@@ -68,6 +69,7 @@ import org.wildfly.clustering.web.session.SpecificationProvider;
 
 /**
  * Factory for creating session managers.
+ * @param <M> the deployment module type
  * @param <S> the HttpSession specification type
  * @param <SC> the ServletContext specification type
  * @param <AL> the HttpSessionAttributeListener specification type
@@ -75,7 +77,7 @@ import org.wildfly.clustering.web.session.SpecificationProvider;
  * @param <LC> the local context type
  * @author Paul Ferraro
  */
-public class InfinispanSessionManagerFactory<S, SC, AL, MC, LC> implements SessionManagerFactory<SC, LC, TransactionBatch>, Runnable {
+public class InfinispanSessionManagerFactory<M, S, SC, AL, LC> implements SessionManagerFactory<SC, LC, TransactionBatch>, Runnable {
 
     final Batcher<TransactionBatch> batcher;
     final Registrar<SessionExpirationListener> expirationRegistrar;
@@ -89,7 +91,7 @@ public class InfinispanSessionManagerFactory<S, SC, AL, MC, LC> implements Sessi
     private final BiConsumer<Locality, Locality> scheduleTask;
     private final SchedulerListener listener;
 
-    public InfinispanSessionManagerFactory(InfinispanSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> config) {
+    public InfinispanSessionManagerFactory(InfinispanSessionManagerFactoryConfiguration<M, S, SC, AL, LC> config) {
         this.affinityFactory = config.getKeyAffinityServiceFactory();
         this.cache = config.getCache();
         this.batcher = new InfinispanBatcher(this.cache);
@@ -175,7 +177,7 @@ public class InfinispanSessionManagerFactory<S, SC, AL, MC, LC> implements Sessi
         return new ConcurrentSessionManager<>(new InfinispanSessionManager<>(this.factory, config), this.properties.isTransactional() ? SimpleManager::new : ConcurrentManager::new);
     }
 
-    private SessionAttributesFactory<SC, ?> createSessionAttributesFactory(InfinispanSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> configuration) {
+    private SessionAttributesFactory<SC, ?> createSessionAttributesFactory(InfinispanSessionManagerFactoryConfiguration<M, S, SC, AL, LC> configuration) {
         switch (configuration.getAttributePersistenceStrategy()) {
             case FINE: {
                 return new FineSessionAttributesFactory<>(new InfinispanMarshalledValueSessionAttributesFactoryConfiguration<>(configuration));
@@ -197,10 +199,10 @@ public class InfinispanSessionManagerFactory<S, SC, AL, MC, LC> implements Sessi
         this.factory.close();
     }
 
-    private static class InfinispanMarshalledValueSessionAttributesFactoryConfiguration<S, SC, AL, V, MC, LC> extends MarshalledValueSessionAttributesFactoryConfiguration<S, SC, AL, V, MC, LC> implements InfinispanSessionAttributesFactoryConfiguration<S, SC, AL, V, MarshalledValue<V, MC>> {
-        private final InfinispanSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> configuration;
+    private static class InfinispanMarshalledValueSessionAttributesFactoryConfiguration<M, S, SC, AL, V, MC, LC> extends MarshalledValueSessionAttributesFactoryConfiguration<S, SC, AL, V, LC> implements InfinispanSessionAttributesFactoryConfiguration<S, SC, AL, V, MarshalledValue<V, ByteBufferMarshaller>> {
+        private final InfinispanSessionManagerFactoryConfiguration<M, S, SC, AL, LC> configuration;
 
-        InfinispanMarshalledValueSessionAttributesFactoryConfiguration(InfinispanSessionManagerFactoryConfiguration<S, SC, AL, MC, LC> configuration) {
+        InfinispanMarshalledValueSessionAttributesFactoryConfiguration(InfinispanSessionManagerFactoryConfiguration<M, S, SC, AL, LC> configuration) {
             super(configuration);
             this.configuration = configuration;
         }

@@ -25,19 +25,18 @@ package org.wildfly.extension.clustering.web;
 import org.jboss.as.controller.PathAddress;
 import org.wildfly.clustering.web.cache.routing.NullRouteLocatorServiceConfiguratorFactory;
 import org.wildfly.clustering.web.routing.RouteLocatorServiceConfiguratorFactory;
-import org.wildfly.clustering.web.session.DistributableSessionManagementConfiguration;
 
 /**
  * @author Paul Ferraro
  */
-public class NoAffinityServiceConfigurator extends AffinityServiceConfigurator<DistributableSessionManagementConfiguration> {
+public class NoAffinityServiceConfigurator<C> extends AffinityServiceConfigurator<C> {
 
     public NoAffinityServiceConfigurator(PathAddress address) {
         super(address);
     }
 
     @Override
-    public RouteLocatorServiceConfiguratorFactory<DistributableSessionManagementConfiguration> get() {
+    public RouteLocatorServiceConfiguratorFactory<C> get() {
         return new NullRouteLocatorServiceConfiguratorFactory<>();
     }
 }

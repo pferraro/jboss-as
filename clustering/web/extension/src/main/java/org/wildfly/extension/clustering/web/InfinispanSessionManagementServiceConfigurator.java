@@ -29,6 +29,7 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
+import org.jboss.modules.Module;
 import org.wildfly.clustering.service.ServiceConfigurator;
 import org.wildfly.clustering.web.infinispan.session.InfinispanSessionManagementConfiguration;
 import org.wildfly.clustering.web.infinispan.session.InfinispanSessionManagementProvider;
@@ -38,7 +39,7 @@ import org.wildfly.clustering.web.session.DistributableSessionManagementProvider
  * Service configurator for Infinispan session management providers.
  * @author Paul Ferraro
  */
-public class InfinispanSessionManagementServiceConfigurator extends SessionManagementServiceConfigurator<InfinispanSessionManagementConfiguration> implements InfinispanSessionManagementConfiguration {
+public class InfinispanSessionManagementServiceConfigurator extends SessionManagementServiceConfigurator<InfinispanSessionManagementConfiguration<Module>> implements InfinispanSessionManagementConfiguration<Module> {
 
     private volatile String containerName;
     private volatile String cacheName;
@@ -55,7 +56,7 @@ public class InfinispanSessionManagementServiceConfigurator extends SessionManag
     }
 
     @Override
-    public DistributableSessionManagementProvider get() {
+    public DistributableSessionManagementProvider<InfinispanSessionManagementConfiguration<Module>> get() {
         return new InfinispanSessionManagementProvider(this, this.getRouteLocatorServiceConfiguratorFactory());
     }
 
