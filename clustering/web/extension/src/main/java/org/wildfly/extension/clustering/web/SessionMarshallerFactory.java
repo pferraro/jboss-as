@@ -27,6 +27,9 @@ import java.util.function.Function;
 import org.jboss.modules.Module;
 import org.wildfly.clustering.marshalling.jboss.JBossByteBufferMarshaller;
 import org.wildfly.clustering.marshalling.jboss.SimpleMarshallingConfigurationRepository;
+import org.wildfly.clustering.marshalling.protostream.ModuleClassResolver;
+import org.wildfly.clustering.marshalling.protostream.ProtoStreamByteBufferMarshaller;
+import org.wildfly.clustering.marshalling.protostream.SerializationContextBuilder;
 import org.wildfly.clustering.marshalling.spi.ByteBufferMarshaller;
 
 /**
@@ -38,6 +41,12 @@ public enum SessionMarshallerFactory implements Function<Module, ByteBufferMarsh
         @Override
         public ByteBufferMarshaller apply(Module module) {
             return new JBossByteBufferMarshaller(new SimpleMarshallingConfigurationRepository(JBossMarshallingVersion.class, JBossMarshallingVersion.CURRENT, module), module.getClassLoader());
+        }
+    },
+    PROTOSTREAM() {
+        @Override
+        public ByteBufferMarshaller apply(Module module) {
+            return new ProtoStreamByteBufferMarshaller(new SerializationContextBuilder(new ModuleClassResolver(module.getModuleLoader())).load(module.getClassLoader()).build());
         }
     },
     ;
