@@ -23,6 +23,7 @@
 package org.wildfly.extension.clustering.web;
 
 import static org.wildfly.extension.clustering.web.SessionManagementResourceDefinition.Attribute.GRANULARITY;
+import static org.wildfly.extension.clustering.web.SessionManagementResourceDefinition.Attribute.MARSHALLER;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,6 +59,7 @@ import org.wildfly.clustering.web.session.SessionAttributePersistenceStrategy;
 public abstract class SessionManagementServiceConfigurator<C extends DistributableSessionManagementConfiguration<Module>> extends CapabilityServiceNameProvider implements ResourceServiceConfigurator, DistributableSessionManagementConfiguration<Module>, Supplier<DistributableSessionManagementProvider<C>> {
 
     private volatile SessionGranularity granularity;
+    private volatile SessionMarshallerFactory marshallerFactory;
     private volatile SupplierDependency<RouteLocatorServiceConfiguratorFactory<C>> factory;
 
     SessionManagementServiceConfigurator(PathAddress address) {
@@ -67,6 +69,7 @@ public abstract class SessionManagementServiceConfigurator<C extends Distributab
     @Override
     public ServiceConfigurator configure(OperationContext context, ModelNode model) throws OperationFailedException {
         this.granularity = ModelNodes.asEnum(GRANULARITY.resolveModelAttribute(context, model), SessionGranularity.class);
+        this.marshallerFactory = ModelNodes.asEnum(MARSHALLER.resolveModelAttribute(context, model), SessionMarshallerFactory.class);
         this.factory = new ServiceSupplierDependency<>(new AffinityServiceNameProvider(context.getCurrentAddress()));
         return this;
     }
@@ -87,7 +90,7 @@ public abstract class SessionManagementServiceConfigurator<C extends Distributab
 
     @Override
     public Function<Module, ByteBufferMarshaller> getMarshallerFactory() {
-        return SessionMarshallerFactory.JBOSS;
+        return this.marshallerFactory;
     }
 
     public RouteLocatorServiceConfiguratorFactory<C> getRouteLocatorServiceConfiguratorFactory() {
