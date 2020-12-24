@@ -23,35 +23,40 @@
 package org.wildfly.clustering.web.infinispan.session.fine;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.UUID;
 
-import org.kohsuke.MetaInfServices;
-import org.wildfly.clustering.marshalling.Externalizer;
+import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
+import org.wildfly.clustering.marshalling.protostream.ProtoStreamDataInput;
+import org.wildfly.clustering.marshalling.protostream.ProtoStreamDataOutput;
+import org.wildfly.clustering.marshalling.protostream.ProtoStreamMarshaller;
+import org.wildfly.clustering.marshalling.protostream.util.UUIDMarshaller;
 import org.wildfly.clustering.marshalling.spi.Serializer;
-import org.wildfly.clustering.marshalling.spi.util.UtilExternalizerProvider;
 import org.wildfly.clustering.web.cache.SessionIdentifierSerializer;
 
-@MetaInfServices(Externalizer.class)
-public class SessionAttributeKeyExternalizer implements Externalizer<SessionAttributeKey> {
+public enum SessionAttributeKeyMarshaller implements ProtoStreamMarshaller<SessionAttributeKey> {
+    INSTANCE;
+
     private static final Serializer<String> IDENTIFIER_SERIALIZER = SessionIdentifierSerializer.INSTANCE;
 
     @Override
-    public void writeObject(ObjectOutput output, SessionAttributeKey key) throws IOException {
-        IDENTIFIER_SERIALIZER.write(output, key.getId());
-        UtilExternalizerProvider.UUID.cast(UUID.class).writeObject(output, key.getAttributeId());
-    }
-
-    @Override
-    public SessionAttributeKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-        String sessionId = IDENTIFIER_SERIALIZER.read(input);
-        UUID attributeId = UtilExternalizerProvider.UUID.cast(UUID.class).readObject(input);
+    public SessionAttributeKey readFrom(ImmutableSerializationContext context, RawProtoStreamReader reader) throws IOException {
+        String sessionId = IDENTIFIER_SERIALIZER.read(new ProtoStreamDataInput(reader));
+        UUID attributeId = UUIDMarshaller.INSTANCE.readFrom(context, reader);
         return new SessionAttributeKey(sessionId, attributeId);
     }
 
     @Override
-    public Class<SessionAttributeKey> getTargetClass() {
+    public void writeTo(ImmutableSerializationContext context, RawProtoStreamWriter writer, SessionAttributeKey key) throws IOException {
+        String sessionId = key.getId();
+        UUID attributeId = key.getAttributeId();
+        IDENTIFIER_SERIALIZER.write(new ProtoStreamDataOutput(writer), sessionId);
+        UUIDMarshaller.INSTANCE.writeTo(context, writer, attributeId);
+    }
+
+    @Override
+    public Class<? extends SessionAttributeKey> getJavaClass() {
         return SessionAttributeKey.class;
     }
 }

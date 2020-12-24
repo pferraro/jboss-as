@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015, Red Hat, Inc., and individual contributors
+ * Copyright 2016, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -20,45 +20,53 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.clustering.web.infinispan;
+package org.wildfly.clustering.web.hotrod;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.StreamCorruptedException;
 import java.util.function.Function;
 
-import org.wildfly.clustering.ee.infinispan.GroupedKey;
-import org.wildfly.clustering.marshalling.Externalizer;
+import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.RawProtoStreamReader;
+import org.infinispan.protostream.RawProtoStreamWriter;
+import org.wildfly.clustering.infinispan.client.Key;
+import org.wildfly.clustering.marshalling.protostream.ProtoStreamDataInput;
+import org.wildfly.clustering.marshalling.protostream.ProtoStreamDataOutput;
+import org.wildfly.clustering.marshalling.protostream.ProtoStreamMarshaller;
 import org.wildfly.clustering.marshalling.spi.Serializer;
 import org.wildfly.clustering.web.cache.SessionIdentifierSerializer;
 
 /**
- * Base externalizer for cache keys containing session identifiers.
  * @author Paul Ferraro
  */
-public class SessionKeyExternalizer<K extends GroupedKey<String>> implements Externalizer<K> {
+public class SessionKeyMarshaller<K extends Key<String>> implements ProtoStreamMarshaller<K> {
     private static final Serializer<String> IDENTIFIER_SERIALIZER = SessionIdentifierSerializer.INSTANCE;
 
     private final Class<K> targetClass;
     private final Function<String, K> resolver;
 
-    protected SessionKeyExternalizer(Class<K> targetClass, Function<String, K> resolver) {
+    public SessionKeyMarshaller(Class<K> targetClass, Function<String, K> resolver) {
         this.targetClass = targetClass;
         this.resolver = resolver;
     }
 
     @Override
-    public void writeObject(ObjectOutput output, K key) throws IOException {
-        IDENTIFIER_SERIALIZER.write(output, key.getId());
+    public K readFrom(ImmutableSerializationContext context, RawProtoStreamReader reader) throws IOException {
+        String id = IDENTIFIER_SERIALIZER.read(new ProtoStreamDataInput(reader));
+        if (reader.readTag() != 0) {
+            throw new StreamCorruptedException();
+        }
+        return this.resolver.apply(id);
     }
 
     @Override
-    public K readObject(ObjectInput input) throws IOException {
-        return this.resolver.apply(IDENTIFIER_SERIALIZER.read(input));
+    public void writeTo(ImmutableSerializationContext context, RawProtoStreamWriter writer, K key) throws IOException {
+        String id = key.getId();
+        IDENTIFIER_SERIALIZER.write(new ProtoStreamDataOutput(writer), id);
     }
 
     @Override
-    public Class<K> getTargetClass() {
+    public Class<? extends K> getJavaClass() {
         return this.targetClass;
     }
 }
