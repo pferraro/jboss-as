@@ -27,7 +27,7 @@ import java.io.InvalidClassException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import org.infinispan.protostream.impl.WireFormat;
+import org.infinispan.protostream.descriptors.WireType;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
@@ -55,14 +55,13 @@ public class LoadedClassField implements Field<Class<?>>, FieldMarshaller<Class<
     public Class<?> readFrom(ProtoStreamReader reader) throws IOException {
         String className = StandardCharsets.ISO_8859_1.decode(reader.readByteBuffer()).toString();
         ClassLoader loader = this.loaderMarshaller.getBuilder();
-        boolean reading = true;
-        while (reading) {
+        while (!reader.isAtEnd()) {
             int tag = reader.readTag();
-            int index = WireFormat.getTagFieldNumber(tag);
+            int index = WireType.getTagFieldNumber(tag);
             if ((index >= this.loaderIndex) && (index < this.loaderIndex + this.loaderMarshaller.getFields())) {
                 loader = this.loaderMarshaller.readField(reader, index, loader);
             } else {
-                reading = reader.ignoreField(tag);
+                reader.skipField(tag);
             }
         }
         try {
@@ -79,7 +78,7 @@ public class LoadedClassField implements Field<Class<?>>, FieldMarshaller<Class<
         ByteBuffer buffer = StandardCharsets.ISO_8859_1.encode(targetClass.getName());
         int offset = buffer.arrayOffset();
         int length = buffer.limit() - offset;
-        writer.writeUInt32NoTag(length);
+        writer.writeVarint32(length);
         writer.writeRawBytes(buffer.array(), offset, length);
         this.loaderMarshaller.writeFields(writer, this.loaderIndex, WildFlySecurityManager.getClassLoaderPrivileged(targetClass));
     }
@@ -95,7 +94,7 @@ public class LoadedClassField implements Field<Class<?>>, FieldMarshaller<Class<
     }
 
     @Override
-    public int getWireType() {
-        return WireFormat.WIRETYPE_LENGTH_DELIMITED;
+    public WireType getWireType() {
+        return WireType.LENGTH_DELIMITED;
     }
 }

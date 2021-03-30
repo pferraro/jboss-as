@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.infinispan.protostream.impl.WireFormat;
+import org.infinispan.protostream.descriptors.WireType;
 import org.wildfly.clustering.marshalling.protostream.ProtoStreamMarshaller;
 import org.wildfly.clustering.marshalling.protostream.ProtoStreamReader;
 import org.wildfly.clustering.marshalling.protostream.ProtoStreamWriter;
@@ -46,16 +46,15 @@ public class BigDecimalMarshaller implements ProtoStreamMarshaller<BigDecimal> {
     public BigDecimal readFrom(ProtoStreamReader reader) throws IOException {
         BigInteger unscaledValue = BigIntegerMarshaller.INSTANCE.getBuilder();
         int scale = DEFAULT_SCALE;
-        boolean reading = true;
-        while (reading) {
+        while (!reader.isAtEnd()) {
             int tag = reader.readTag();
-            int index = WireFormat.getTagFieldNumber(tag);
+            int index = WireType.getTagFieldNumber(tag);
             if (index >= BIG_INTEGER_INDEX && index < SCALE_INDEX) {
                 unscaledValue = BigIntegerMarshaller.INSTANCE.readField(reader, index - BIG_INTEGER_INDEX, unscaledValue);
             } else if (index == SCALE_INDEX) {
                 scale = reader.readSInt32();
             } else {
-                reading = reader.ignoreField(tag);
+                reader.skipField(tag);
             }
         }
         return new BigDecimal(unscaledValue, scale);
