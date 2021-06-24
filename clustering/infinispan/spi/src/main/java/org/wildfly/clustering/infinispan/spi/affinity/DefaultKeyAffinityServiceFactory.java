@@ -28,7 +28,6 @@ import java.util.concurrent.ExecutorService;
 import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyGenerator;
-import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 
 /**
  * Factory for a {@link KeyAffinityService} whose implementation varies depending on cache mode.
@@ -46,6 +45,6 @@ public class DefaultKeyAffinityServiceFactory implements KeyAffinityServiceFacto
 
     @Override
     public <K> KeyAffinityService<K> createService(Cache<K, ?> cache, KeyGenerator<K> generator) {
-        return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ? new KeyAffinityServiceImpl<>(this.executor, cache, generator, this.bufferSize, Collections.singleton(cache.getCacheManager().getAddress()), false) : new SimpleKeyAffinityService<>(generator);
+        return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ? new DefaultKeyAffinityService<>(this.executor, cache, generator, this.bufferSize, Collections.singleton(cache.getCacheManager().getAddress())) : new SimpleKeyAffinityService<>(generator);
     }
 }
