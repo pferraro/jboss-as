@@ -139,9 +139,12 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
                     if (result == null) {
                         // there are no elements in the queue, make sure the producer is started
                         keyProducerStartLatch.open();
-                        // our address might have been removed from the consistent hash
-                        if (!isNodeInConsistentHash(address))
-                            throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+
+                        // If address is not a member of the cluster, or the member does not own any segments, return a random key
+                        ConsistentHash hash = this.cache.getAdvancedCache().getDistributionManager().getCacheTopology().getCurrentCH();
+                        if (!hash.getMembers().contains(address) || hash.getPrimarySegmentsForOwner(address).isEmpty()) {
+                            return this.keyGenerator.getKey();
+                        }
                     }
                 } finally {
                     maxNumberInvariant.readLock().unlock();
@@ -347,12 +350,6 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
     private Address getAddressForKey(Object key) {
         DistributionManager distributionManager = getDistributionManager();
         return distributionManager.getCacheTopology().getDistribution(key).primary();
-    }
-
-    private boolean isNodeInConsistentHash(Address address) {
-         DistributionManager distributionManager = getDistributionManager();
-         ConsistentHash hash = distributionManager.getWriteConsistentHash();
-         return hash.getMembers().contains(address);
     }
 
     private DistributionManager getDistributionManager() {
