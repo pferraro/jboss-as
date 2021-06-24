@@ -240,14 +240,15 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
         public void run() {
             try {
                 while (!isStopped) {
-                    keyProducerStartLatch.await(10, TimeUnit.SECONDS);
-                    if (!isStopped) {
-                        isActive = true;
-                        log.trace("KeyGeneratorWorker marked as ACTIVE");
-                        generateKeys();
+                    if (keyProducerStartLatch.await(10, TimeUnit.SECONDS)) {
+                        if (!isStopped) {
+                            isActive = true;
+                            log.trace("KeyGeneratorWorker marked as ACTIVE");
+                            generateKeys();
 
-                        isActive = false;
-                        log.trace("KeyGeneratorWorker marked as INACTIVE");
+                            isActive = false;
+                            log.trace("KeyGeneratorWorker marked as INACTIVE");
+                        }
                     }
                 }
             } catch (InterruptedException e) {
