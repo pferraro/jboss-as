@@ -24,7 +24,6 @@ package org.wildfly.clustering.infinispan.spi.affinity;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -131,8 +130,9 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
                 maxNumberInvariant.readLock().lock();
                 try {
                     queue = address2key.get(address);
-                    if (queue == null)
-                        throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+                    if (queue == null) {
+                        return this.keyGenerator.getKey();
+                    }
 
                     // first try to take an element without waiting
                     result = queue.poll();
@@ -177,10 +177,9 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
             log.debug("Service already started, ignoring call to start!");
             return;
         }
-        List<Address> existingNodes = getExistingNodes();
         maxNumberInvariant.writeLock().lock();
         try {
-            addQueuesForAddresses(existingNodes);
+            addQueuesForAddresses(cache.getAdvancedCache().getDistributionManager().getCacheTopology().getCurrentCH());
             resetNumberOfKeys();
         } finally {
             maxNumberInvariant.writeLock().unlock();
@@ -211,7 +210,7 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
             maxNumberInvariant.writeLock().lock();
             try {
                 address2key.clear(); //we need to drop everything as key-mapping data is stale due to view change
-                addQueuesForAddresses(event.getConsistentHashAtEnd().getMembers());
+                addQueuesForAddresses(event.getConsistentHashAtEnd());
                 resetNumberOfKeys();
                 keyProducerStartLatch.open();
             } finally {
@@ -330,9 +329,9 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
      * Important: this *MUST* be called with WL on {@link #address2key}.
      */
     @GuardedBy("maxNumberInvariant")
-    private void addQueuesForAddresses(Collection<Address> addresses) {
-        for (Address address : addresses) {
-            if (interestedInAddress(address)) {
+    private void addQueuesForAddresses(ConsistentHash hash) {
+        for (Address address : hash.getMembers()) {
+            if (interestedInAddress(address) && !hash.getPrimarySegmentsForOwner(address).isEmpty()) {
                 address2key.put(address, new ArrayBlockingQueue<>(bufferSize));
             } else {
                 log.tracef("Skipping address: %s", address);
@@ -342,10 +341,6 @@ public class DefaultKeyAffinityService<K> implements KeyAffinityService<K> {
 
     private boolean interestedInAddress(Address address) {
         return filter == null || filter.contains(address);
-    }
-
-    private List<Address> getExistingNodes() {
-        return cache.getAdvancedCache().getRpcManager().getTransport().getMembers();
     }
 
     private Address getAddressForKey(Object key) {
